@@ -38,4 +38,17 @@ public sealed class HomePageTests : WebTest
         (await homePage.Header.WaitUntilHydratedAsync()).Should().BeTrue();
         (await homePage.Header.IsBrowseLinkVisibleAsync()).Should().BeTrue();
     }
+
+    [Test]
+    public async Task HomePage_Footer_Is_Present()
+    {
+        var homePage = new HomePage(Page, Config);
+        await homePage.GotoAsync();
+        await homePage.WaitForHeroAsync();
+
+        await homePage.Footer.ScrollIntoViewAsync();
+
+        (await homePage.Footer.IsAboutUsLinkVisibleAsync()).Should().BeTrue();
+        (await homePage.Footer.IsFaqLinkVisibleAsync()).Should().BeTrue();
+    }
 }
