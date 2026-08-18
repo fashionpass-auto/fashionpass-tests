@@ -1,0 +1,31 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+
+# Test results & Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+*.png
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# macOS
+.DS_Store
+
+# Environment overrides
+appsettings.*.json
+
+# Local secrets - never commit
+*.key
+*.pem
+secrets.json

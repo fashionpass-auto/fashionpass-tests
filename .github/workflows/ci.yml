@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  web-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Install Playwright CLI
+        run: dotnet tool install --global Microsoft.Playwright.CLI
+
+      - name: Install Chromium
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          playwright install --with-deps chromium
+
+      - name: Build
+        run: dotnet build FashionPass.Tests.sln --configuration Release
+
+      - name: Run web tests
+        env:
+          FASHIONPASS_HEADLESS: "true"
+          FASHIONPASS_BROWSER_TYPE: chromium
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet test FashionPass.Tests.sln --configuration Release --no-build --filter "FullyQualifiedName~Tests.Web"
