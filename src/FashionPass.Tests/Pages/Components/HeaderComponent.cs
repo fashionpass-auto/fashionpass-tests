@@ -51,6 +51,17 @@ public sealed class HeaderComponent
     public async Task<bool> IsBrowseLinkVisibleAsync()
         => await _page.Locator(Utilities.Selectors.Nav.BrowseLink).IsVisibleAsync();
 
+    public async Task ClickSignInAsync()
+    {
+        var signIn = _page.GetByText(Utilities.Selectors.Login.SignInTriggerText).First;
+        await signIn.WaitForAsync(new LocatorWaitForOptions
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = _config.Timeouts.Default
+        });
+        await signIn.ClickAsync();
+    }
+
     public async Task<bool> IsLoginLinkVisibleAsync() => await _loginLink.IsVisibleAsync();
 
     public async Task<bool> IsBagLinkVisibleAsync() => await _bagLink.IsVisibleAsync();

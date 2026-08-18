@@ -34,6 +34,23 @@ public static class Selectors
         public const string PasswordInput = "input[type='password'], input[name='password']";
         public const string SubmitButton = "button[type='submit']";
         public const string ErrorMessage = ".error, [class*='error' i]";
+
+        public const string EmailFieldName = "EMAIL";
+        public const string PasswordFieldName = "PASSWORD";
+        public const string LogInButtonName = "Log in";
+        public const string SignInTriggerText = "Sign In";
+    }
+
+    public static class Promo
+    {
+        public const string DismissButtonText = "No thanks";
+        public const int PopupWaitMs = 8000;
+    }
+
+    public static class Account
+    {
+        public const string Backdrop = ".MuiBackdrop-root";
+        public const string GreetingFormat = "Hi, {0}!";
     }
 
     public static class SignUp

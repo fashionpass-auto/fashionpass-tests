@@ -10,18 +10,22 @@ public sealed class LoginPage : BasePage
     {
     }
 
-    public override string UrlPath => "/login";
+    public override string UrlPath => "/";
 
-    public async Task LoginAsync(string email, string password)
+    public async Task LoginAsync(string email, string? password = null)
     {
-        await FillAsync(Locator(Selectors.Login.EmailInput), email);
-        await FillAsync(Locator(Selectors.Login.PasswordInput), password);
-        await ClickAsync(Locator(Selectors.Login.SubmitButton));
+        await FillAsync(GetByRole(AriaRole.Textbox, Selectors.Login.EmailFieldName), email);
+
+        if (!string.IsNullOrEmpty(password))
+        {
+            var passwordField = Locator(Selectors.Login.PasswordInput);
+            if (await passwordField.IsVisibleAsync())
+                await FillAsync(passwordField, password);
+        }
+
+        await ClickAsync(GetByRole(AriaRole.Button, Selectors.Login.LogInButtonName));
     }
 
-    public async Task<bool> IsEmailInputVisibleAsync()
-        => await IsVisibleAsync(Locator(Selectors.Login.EmailInput));
-
-    public async Task<bool> IsErrorMessageVisibleAsync()
-        => await IsVisibleAsync(Locator(Selectors.Login.ErrorMessage));
+    public async Task<bool> IsEmailFieldVisibleAsync()
+        => await IsVisibleAsync(GetByRole(AriaRole.Textbox, Selectors.Login.EmailFieldName));
 }

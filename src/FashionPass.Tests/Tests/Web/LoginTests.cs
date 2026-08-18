@@ -7,22 +7,31 @@ namespace FashionPass.Tests.Tests.Web;
 public sealed class LoginTests : WebTest
 {
     [Test]
-    public async Task LoginPage_Displays_Email_And_Password_Fields()
+    public async Task Login_Displays_Email_Field()
     {
-        var loginPage = new LoginPage(Page, Config);
-        await loginPage.GotoAsync();
+        var home = new HomePage(Page, Config);
+        await home.GotoAsync();
+        await home.DismissPromoPopupIfPresentAsync();
 
-        (await loginPage.IsEmailInputVisibleAsync()).Should().BeTrue();
+        var login = await home.ClickSignInAsync();
+
+        (await login.IsEmailFieldVisibleAsync()).Should().BeTrue();
     }
 
     [Test]
-    public async Task Login_With_Invalid_Credentials_Shows_Error()
+    public async Task Login_With_Valid_Account_Shows_Greeting_And_Account_Menu()
     {
-        var loginPage = new LoginPage(Page, Config);
-        await loginPage.GotoAsync();
+        var home = new HomePage(Page, Config);
+        await home.GotoAsync();
+        await home.DismissPromoPopupIfPresentAsync();
 
-        await loginPage.LoginAsync("invalid-user@fashionpass.test", "wrong-password");
+        var login = await home.ClickSignInAsync();
+        await login.LoginAsync(Config.Users.Default.Email, Config.Users.Default.Password);
 
-        (await loginPage.IsErrorMessageVisibleAsync()).Should().BeTrue();
+        await home.Account.ClickAccountButtonAsync(Config.Users.Default.FirstName);
+        (await home.Account.IsGreetingVisibleAsync(Config.Users.Default.FirstName)).Should().BeTrue();
+
+        await home.Account.CloseMenuAsync();
+        (await home.Account.IsAccountButtonVisibleAsync(Config.Users.Default.FirstName)).Should().BeTrue();
     }
 }
