@@ -5,7 +5,7 @@ namespace FashionPass.Tests.Utilities;
 
 public static class ScreenshotHelper
 {
-    public static async Task CaptureAsync(IPage page, TestConfig config, string testName)
+    public static async Task<string> CaptureAsync(IPage page, TestConfig config, string testName)
     {
         var directory = Path.Combine(AppContext.BaseDirectory, config.Screenshots.Directory);
         Directory.CreateDirectory(directory);
@@ -20,5 +20,6 @@ public static class ScreenshotHelper
         });
 
         TestContext.AddTestAttachment(path);
+        return path;
     }
 }

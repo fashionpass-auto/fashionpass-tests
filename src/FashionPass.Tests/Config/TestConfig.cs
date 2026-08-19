@@ -15,6 +15,7 @@ public sealed class TestConfig
     public ScreenshotSettings Screenshots { get; set; } = new();
     public MobileSettings Mobile { get; set; } = new();
     public UserSettings Users { get; set; } = new();
+    public EmailSettings Email { get; set; } = new();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -78,6 +79,18 @@ public sealed class TestConfig
             Timeouts.Navigation = int.Parse(navTimeout);
         if (System.Environment.GetEnvironmentVariable("FASHIONPASS_MOBILE_ENABLED") is { Length: > 0 } mobileEnabled)
             Mobile.Enabled = bool.Parse(mobileEnabled);
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_EMAIL_ENABLED") is { Length: > 0 } emailEnabled)
+            Email.Enabled = bool.Parse(emailEnabled);
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_SMTP_HOST") is { Length: > 0 } smtpHost)
+            Email.SmtpHost = smtpHost;
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_SMTP_PORT") is { Length: > 0 } smtpPort)
+            Email.SmtpPort = int.Parse(smtpPort);
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_SMTP_USER") is { Length: > 0 } smtpUser)
+            Email.Username = smtpUser;
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_SMTP_PASS") is { Length: > 0 } smtpPass)
+            Email.Password = smtpPass;
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_SMTP_FROM") is { Length: > 0 } smtpFrom)
+            Email.From = smtpFrom;
     }
 }
 
@@ -144,4 +157,16 @@ public sealed class Site
 
     public string BaseUrl { get; set; } = "";
     public string Name { get; set; } = "";
+}
+
+public sealed class EmailSettings
+{
+    public bool Enabled { get; set; }
+    public string SmtpHost { get; set; } = "smtp.gmail.com";
+    public int SmtpPort { get; set; } = 587;
+    public bool UseSsl { get; set; } = true;
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string From { get; set; } = "";
+    public string[] To { get; set; } = Array.Empty<string>();
 }
