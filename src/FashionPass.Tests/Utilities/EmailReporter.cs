@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 using FashionPass.Tests.Config;
+using Microsoft.Playwright;
 
 namespace FashionPass.Tests.Utilities;
 
@@ -12,6 +13,7 @@ public static class EmailReporter
         string testName,
         string? failureMessage,
         TestActivityCollector? activity,
+        IPage page,
         string? screenshotPath,
         string? tracePath)
     {
@@ -27,14 +29,21 @@ public static class EmailReporter
             return;
         }
 
-        var body = BuildHtmlBody(config, testName, failureMessage, activity, screenshotPath, tracePath);
+        var pageTitle = string.Empty;
+        if (page is not null)
+        {
+            try { pageTitle = await page.TitleAsync(); }
+            catch (PlaywrightException) { pageTitle = string.Empty; }
+        }
+
+        var body = BuildHtmlBody(config, testName, pageTitle, failureMessage, activity, screenshotPath, tracePath);
 
 #pragma warning disable CS0618
         using var message = new MailMessage
         {
             From = new MailAddress(
                 string.IsNullOrWhiteSpace(config.Email.From) ? config.Email.Username : config.Email.From),
-            Subject = $"[FashionPass Tests] FAILED: {testName} ({config.EnvironmentName})",
+            Subject = $"[FashionPass Tests] Test Failed: {testName}",
             IsBodyHtml = true,
             Body = body
         };
@@ -63,6 +72,7 @@ public static class EmailReporter
     private static string BuildHtmlBody(
         TestConfig config,
         string testName,
+        string pageTitle,
         string? failureMessage,
         TestActivityCollector? activity,
         string? screenshotPath,
@@ -71,52 +81,34 @@ public static class EmailReporter
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html><html><body style='font-family: Arial, sans-serif;'>");
         sb.AppendLine("<h2 style='color:#d93025;'>Test Failed: " + HtmlEncode(testName) + "</h2>");
-        sb.AppendLine("<table cellpadding='6' style='border-collapse:collapse;'>");
+        sb.AppendLine("<table cellpadding='4' style='border-collapse:collapse;'>");
         sb.AppendLine(Row("Environment", config.EnvironmentName));
-        sb.AppendLine(Row("Site", config.BaseUrl));
-        sb.AppendLine(Row("Browser", config.Browser.Type + (string.IsNullOrWhiteSpace(config.Browser.Channel) ? "" : " (" + config.Browser.Channel + ")")));
+        sb.AppendLine(Row("Page Title", pageTitle));
+        sb.AppendLine(Row("Last Action", activity?.LastAction ?? "None recorded"));
         sb.AppendLine(Row("Timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
         sb.AppendLine("</table>");
 
-        sb.AppendLine("<h3 style='color:#333;'>Event that failed</h3>");
+        sb.AppendLine("<h3 style='color:#333;'>Failure</h3>");
         sb.AppendLine("<pre style='background:#f6f8fa;padding:10px;border-radius:4px;'>" +
                       HtmlEncode(failureMessage ?? "No failure message captured") + "</pre>");
 
-        sb.AppendLine("<h3 style='color:#333;'>Failed API requests</h3>");
         var failedApis = activity?.FailedResponses ?? new List<string>();
         if (failedApis.Count > 0)
         {
+            sb.AppendLine("<h3 style='color:#333;'>Failed API requests</h3>");
             sb.AppendLine("<ul>");
             foreach (var api in failedApis.Take(50))
                 sb.AppendLine("<li>" + HtmlEncode(api) + "</li>");
             sb.AppendLine("</ul>");
         }
-        else
-        {
-            sb.AppendLine("<p>No failed HTTP requests (4xx/5xx) were recorded.</p>");
-        }
-
-        var consoleErrors = activity?.ConsoleErrors ?? new List<string>();
-        if (consoleErrors.Count > 0)
-        {
-            sb.AppendLine("<h3 style='color:#333;'>Console errors</h3>");
-            sb.AppendLine("<ul>");
-            foreach (var error in consoleErrors.Take(20))
-                sb.AppendLine("<li>" + HtmlEncode(error) + "</li>");
-            sb.AppendLine("</ul>");
-        }
 
         if (screenshotPath is not null && File.Exists(screenshotPath))
-        {
-            sb.AppendLine("<h3 style='color:#333;'>Screenshot</h3>");
-            sb.AppendLine("<p>Attached: <code>" + HtmlEncode(Path.GetFileName(screenshotPath)) + "</code></p>");
-        }
+            sb.AppendLine("<p><b>Screenshot:</b> attached (" + HtmlEncode(Path.GetFileName(screenshotPath)) + ")</p>");
 
         if (tracePath is not null && File.Exists(tracePath))
         {
-            sb.AppendLine("<h3 style='color:#333;'>Playwright Trace</h3>");
-            sb.AppendLine("<p>Attached: <code>" + HtmlEncode(Path.GetFileName(tracePath)) + "</code></p>");
-            sb.AppendLine("<p>Open it locally with: <code>npx playwright show-trace " +
+            sb.AppendLine("<p><b>Trace report:</b> attached (" + HtmlEncode(Path.GetFileName(tracePath)) + ")</p>");
+            sb.AppendLine("<p>Open the trace with: <code>npx playwright show-trace " +
                           HtmlEncode(Path.GetFileName(tracePath)) + "</code></p>");
         }
 

@@ -4,13 +4,27 @@ namespace FashionPass.Tests.Utilities;
 
 public sealed class TestActivityCollector
 {
+    private static readonly AsyncLocal<TestActivityCollector?> CurrentLocal = new();
+
     private readonly List<string> _consoleErrors = new();
     private readonly List<string> _failedResponses = new();
     private readonly List<string> _pageErrors = new();
+    private readonly List<string> _actions = new();
+
+    public static TestActivityCollector? Current
+    {
+        get => CurrentLocal.Value;
+        set => CurrentLocal.Value = value;
+    }
 
     public IReadOnlyList<string> ConsoleErrors => _consoleErrors;
     public IReadOnlyList<string> FailedResponses => _failedResponses;
     public IReadOnlyList<string> PageErrors => _pageErrors;
+    public IReadOnlyList<string> Actions => _actions;
+
+    public string? LastAction => _actions.Count > 0 ? _actions[^1] : null;
+
+    public void RecordAction(string action) => _actions.Add(action);
 
     public void Attach(IPage page)
     {

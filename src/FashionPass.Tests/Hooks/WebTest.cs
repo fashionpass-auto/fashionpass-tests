@@ -31,6 +31,7 @@ public abstract class WebTest : BaseTest
         Page = await Context.NewPageAsync();
         Activity = new TestActivityCollector();
         Activity.Attach(Page);
+        TestActivityCollector.Current = Activity;
 
         if (Config.Browser.Trace || Config.Email.Enabled)
         {
@@ -60,6 +61,7 @@ public abstract class WebTest : BaseTest
                     testName,
                     TestContext.CurrentContext.Result.Message,
                     Activity,
+                    Page,
                     screenshotPath,
                     tracePath);
         }
@@ -69,6 +71,7 @@ public abstract class WebTest : BaseTest
         }
 
         await Context.CloseAsync();
+        TestActivityCollector.Current = null;
     }
 
     [OneTimeTearDown]

@@ -1,4 +1,5 @@
 using FashionPass.Tests.Config;
+using FashionPass.Tests.Utilities;
 using Microsoft.Playwright;
 
 namespace FashionPass.Tests.Pages;
@@ -18,7 +19,9 @@ public abstract class BasePage
 
     public virtual async Task GotoAsync(string? urlPath = null)
     {
-        await Page.GotoAsync(urlPath ?? UrlPath, new PageGotoOptions
+        var target = urlPath ?? UrlPath;
+        TestActivityCollector.Current?.RecordAction($"Navigate to {target}");
+        await Page.GotoAsync(target, new PageGotoOptions
         {
             WaitUntil = WaitUntilState.Load,
             Timeout = Config.Timeouts.Navigation
@@ -36,6 +39,7 @@ public abstract class BasePage
 
     protected async Task ClickAsync(ILocator locator)
     {
+        TestActivityCollector.Current?.RecordAction($"Click on {locator}");
         await locator.WaitForAsync(new LocatorWaitForOptions
         {
             State = WaitForSelectorState.Visible,
@@ -46,6 +50,7 @@ public abstract class BasePage
 
     protected async Task FillAsync(ILocator locator, string value)
     {
+        TestActivityCollector.Current?.RecordAction($"Fill '{value}' into {locator}");
         await locator.WaitForAsync(new LocatorWaitForOptions
         {
             State = WaitForSelectorState.Visible,
