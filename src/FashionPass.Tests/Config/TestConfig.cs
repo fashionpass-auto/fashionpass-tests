@@ -8,8 +8,8 @@ public sealed class TestConfig
 {
     private const string EnvironmentVariable = "FASHIONPASS_ENV";
 
-    public string EnvironmentName { get; set; } = "production";
-    public string BaseUrl { get; set; } = "https://www.fashionpass.com";
+    public string EnvironmentName { get; set; } = "live";
+    public SiteSettings Sites { get; set; } = new();
     public BrowserSettings Browser { get; set; } = new();
     public TimeoutSettings Timeouts { get; set; } = new();
     public ScreenshotSettings Screenshots { get; set; } = new();
@@ -56,10 +56,16 @@ public sealed class TestConfig
         return target;
     }
 
+    public string BaseUrl => Sites.Main.BaseUrl;
+
     private void ApplyEnvironmentOverrides()
     {
         if (System.Environment.GetEnvironmentVariable("FASHIONPASS_BASEURL") is { Length: > 0 } baseUrl)
-            BaseUrl = baseUrl;
+            Sites.Main.BaseUrl = baseUrl;
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_BANJO_BASEURL") is { Length: > 0 } banjoUrl)
+            Sites.Banjo.BaseUrl = banjoUrl;
+        if (System.Environment.GetEnvironmentVariable("FASHIONPASS_LOKI_BASEURL") is { Length: > 0 } lokiUrl)
+            Sites.Loki.BaseUrl = lokiUrl;
         if (System.Environment.GetEnvironmentVariable("FASHIONPASS_BROWSER_TYPE") is { Length: > 0 } browserType)
             Browser.Type = browserType;
         if (System.Environment.GetEnvironmentVariable("FASHIONPASS_BROWSER_CHANNEL") is { Length: > 0 } channel)
@@ -117,4 +123,25 @@ public sealed class MobileSettings
 public sealed class UserSettings
 {
     public User Default { get; set; } = new();
+}
+
+public sealed class SiteSettings
+{
+    public Site Main { get; set; } = new("https://www.fashionpass.com", "Main");
+    public Site Banjo { get; set; } = new("https://banjo.fashionpass.com", "Banjo");
+    public Site Loki { get; set; } = new("https://loki.fashionpass.com", "Loki");
+}
+
+public sealed class Site
+{
+    public Site() { }
+
+    public Site(string baseUrl, string name)
+    {
+        BaseUrl = baseUrl;
+        Name = name;
+    }
+
+    public string BaseUrl { get; set; } = "";
+    public string Name { get; set; } = "";
 }

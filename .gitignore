@@ -24,6 +24,8 @@ packages/
 
 # Environment overrides
 appsettings.*.json
+!appsettings.dev.json
+!appsettings.stage.json
 
 # Local secrets - never commit
 *.key
