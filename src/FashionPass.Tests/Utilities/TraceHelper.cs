@@ -10,8 +10,8 @@ public static class TraceHelper
         await context.Tracing.StartAsync(new TracingStartOptions
         {
             Screenshots = true,
-            Snapshots = true,
-            Sources = true
+            Snapshots = false,
+            Sources = false
         });
     }
 
@@ -25,8 +25,10 @@ public static class TraceHelper
 
         await context.Tracing.StopAsync(new TracingStopOptions { Path = path });
 
-        TestContext.AddTestAttachment(path);
-        return path;
+        var sanitizedPath = TraceSanitizer.Sanitize(path, config);
+
+        TestContext.AddTestAttachment(sanitizedPath);
+        return sanitizedPath;
     }
 
     public static Task StopDiscardAsync(IBrowserContext context) => context.Tracing.StopAsync();

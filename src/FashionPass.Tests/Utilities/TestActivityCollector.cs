@@ -4,7 +4,8 @@ namespace FashionPass.Tests.Utilities;
 
 public sealed class TestActivityCollector
 {
-    private static readonly AsyncLocal<TestActivityCollector?> CurrentLocal = new();
+    [ThreadStatic]
+    private static TestActivityCollector? CurrentLocal;
 
     private readonly List<string> _consoleErrors = new();
     private readonly List<string> _failedResponses = new();
@@ -13,8 +14,8 @@ public sealed class TestActivityCollector
 
     public static TestActivityCollector? Current
     {
-        get => CurrentLocal.Value;
-        set => CurrentLocal.Value = value;
+        get => CurrentLocal;
+        set => CurrentLocal = value;
     }
 
     public IReadOnlyList<string> ConsoleErrors => _consoleErrors;

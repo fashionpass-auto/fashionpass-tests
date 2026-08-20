@@ -39,6 +39,14 @@ public sealed class TestConfig
                 merged = Merge(merged, envObject);
         }
 
+        var localPath = Path.Combine(AppContext.BaseDirectory, "appsettings.local.json");
+        if (File.Exists(localPath))
+        {
+            var localNode = JsonNode.Parse(File.ReadAllText(localPath));
+            if (localNode is JsonObject localObject)
+                merged = Merge(merged, localObject);
+        }
+
         var config = merged.Deserialize<TestConfig>(JsonOptions) ?? new TestConfig();
         config.ApplyEnvironmentOverrides();
         return config;

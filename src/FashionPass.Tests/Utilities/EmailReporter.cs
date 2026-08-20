@@ -57,17 +57,43 @@ public static class EmailReporter
         if (!string.IsNullOrWhiteSpace(tracePath) && File.Exists(tracePath))
             message.Attachments.Add(new Attachment(tracePath));
 
-        using var client = new SmtpClient(config.Email.SmtpHost, config.Email.SmtpPort)
-        {
-            EnableSsl = config.Email.UseSsl,
-            Credentials = new NetworkCredential(config.Email.Username, config.Email.Password),
-            Timeout = 60000
-        };
+        const int maxAttempts = 3;
 
-        await client.SendMailAsync(message);
-        Console.WriteLine($"[EmailReporter] Failure report sent to {string.Join(", ", config.Email.To)}");
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                using var client = new SmtpClient(config.Email.SmtpHost, config.Email.SmtpPort)
+                {
+                    EnableSsl = config.Email.UseSsl,
+                    Credentials = new NetworkCredential(config.Email.Username, config.Email.Password),
+                    Timeout = 60000
+                };
+
+                await client.SendMailAsync(message);
+                Console.WriteLine($"[EmailReporter] Failure report sent to {string.Join(", ", config.Email.To)}");
+                return;
+            }
+            catch (SmtpException ex) when (IsTransient(ex.StatusCode) && attempt < maxAttempts)
+            {
+                Console.WriteLine($"[EmailReporter] Transient SMTP error (attempt {attempt}/{maxAttempts}): {ex.Message}");
+                await Task.Delay(TimeSpan.FromSeconds(attempt * 5));
+            }
+            catch (SmtpException ex)
+            {
+                Console.WriteLine($"[EmailReporter] FAILED to send email to {string.Join(", ", config.Email.To)}: {ex.Message}");
+                return;
+            }
+        }
 #pragma warning restore CS0618
     }
+
+    private static bool IsTransient(SmtpStatusCode statusCode) => statusCode is
+        SmtpStatusCode.GeneralFailure or
+        SmtpStatusCode.ServiceNotAvailable or
+        SmtpStatusCode.MailboxBusy or
+        SmtpStatusCode.LocalErrorInProcessing or
+        SmtpStatusCode.InsufficientStorage;
 
     private static string BuildHtmlBody(
         TestConfig config,
