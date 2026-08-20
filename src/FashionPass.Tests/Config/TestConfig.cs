@@ -8,6 +8,7 @@ public sealed class TestConfig
 {
     private const string EnvironmentVariable = "FASHIONPASS_ENV";
 
+    [System.Text.Json.Serialization.JsonPropertyName("Environment")]
     public string EnvironmentName { get; set; } = "live";
     public SiteSettings Sites { get; set; } = new();
     public BrowserSettings Browser { get; set; } = new();
@@ -25,32 +26,36 @@ public sealed class TestConfig
     public static TestConfig Load()
     {
         var basePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-        var envName = System.Environment.GetEnvironmentVariable(EnvironmentVariable) ?? "production";
+        var localPath = Path.Combine(AppContext.BaseDirectory, "appsettings.local.json");
 
         var baseNode = JsonNode.Parse(File.ReadAllText(basePath));
-        if (baseNode is not JsonObject merged)
+        if (baseNode is not JsonObject baseObject)
             throw new InvalidOperationException($"Invalid configuration root in {basePath}");
+        var merged = baseObject.DeepClone() as JsonObject;
+
+        JsonObject? localObject = null;
+        if (File.Exists(localPath) && JsonNode.Parse(File.ReadAllText(localPath)) is JsonObject local)
+            localObject = local;
+
+        var envName = System.Environment.GetEnvironmentVariable(EnvironmentVariable);
+        envName = string.IsNullOrWhiteSpace(envName)
+            ? ReadEnvironment(localObject) ?? ReadEnvironment(merged) ?? "live"
+            : envName;
 
         var envPath = Path.Combine(AppContext.BaseDirectory, $"appsettings.{envName}.json");
-        if (File.Exists(envPath))
-        {
-            var envNode = JsonNode.Parse(File.ReadAllText(envPath));
-            if (envNode is JsonObject envObject)
-                merged = Merge(merged, envObject);
-        }
+        if (File.Exists(envPath) && JsonNode.Parse(File.ReadAllText(envPath)) is JsonObject envObject)
+            merged = Merge(merged, envObject);
 
-        var localPath = Path.Combine(AppContext.BaseDirectory, "appsettings.local.json");
-        if (File.Exists(localPath))
-        {
-            var localNode = JsonNode.Parse(File.ReadAllText(localPath));
-            if (localNode is JsonObject localObject)
-                merged = Merge(merged, localObject);
-        }
+        if (localObject is not null)
+            merged = Merge(merged, localObject);
 
         var config = merged.Deserialize<TestConfig>(JsonOptions) ?? new TestConfig();
         config.ApplyEnvironmentOverrides();
         return config;
     }
+
+    private static string? ReadEnvironment(JsonObject? root)
+        => root?["Environment"]?.GetValue<string>();
 
     private static JsonObject Merge(JsonObject target, JsonObject source)
     {
