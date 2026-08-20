@@ -42,7 +42,7 @@ public sealed class HeaderComponent
             });
             return true;
         }
-        catch (PlaywrightException)
+        catch (Exception)
         {
             return false;
         }
@@ -60,6 +60,24 @@ public sealed class HeaderComponent
             Timeout = _config.Timeouts.Default
         });
         await signIn.ClickAsync();
+    }
+
+    public async Task<bool> WaitUntilSignedInAsync()
+    {
+        try
+        {
+            var signIn = _page.GetByText(Utilities.Selectors.Login.SignInTriggerText).First;
+            await signIn.WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Hidden,
+                Timeout = _config.Timeouts.SignedIn
+            });
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     public async Task<bool> IsLoginLinkVisibleAsync() => await _loginLink.IsVisibleAsync();

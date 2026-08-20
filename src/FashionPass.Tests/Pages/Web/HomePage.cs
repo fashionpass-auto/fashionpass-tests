@@ -49,7 +49,35 @@ public sealed class HomePage : BasePage
             await dismiss.ClickAsync();
             return true;
         }
-        catch (PlaywrightException)
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> WaitForPromoPopupAndDismissAsync()
+    {
+        try
+        {
+            var popup = Page.GetByRole(AriaRole.Dialog, new PageGetByRoleOptions
+            {
+                Name = Selectors.Promo.PopupDialogAriaLabel,
+                Exact = false
+            });
+            await popup.WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = Selectors.Promo.PopupAppearTimeoutMs
+            });
+            var close = popup.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions
+            {
+                Name = Selectors.Promo.CloseDialogAriaLabel,
+                Exact = true
+            });
+            await close.ClickAsync();
+            return true;
+        }
+        catch (Exception)
         {
             return false;
         }

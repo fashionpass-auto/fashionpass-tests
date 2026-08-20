@@ -39,7 +39,7 @@ public sealed class AccountComponent
             });
             return true;
         }
-        catch (PlaywrightException)
+        catch (Exception)
         {
             return false;
         }
@@ -70,7 +70,7 @@ public sealed class AccountComponent
             });
             return true;
         }
-        catch (PlaywrightException)
+        catch (Exception)
         {
             return false;
         }

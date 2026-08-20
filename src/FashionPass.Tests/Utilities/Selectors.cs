@@ -44,7 +44,10 @@ public static class Selectors
     public static class Promo
     {
         public const string DismissButtonText = "No thanks";
+        public const string CloseDialogAriaLabel = "Close dialog";
+        public const string PopupDialogAriaLabel = "POPUP Form";
         public const int PopupWaitMs = 8000;
+        public const int PopupAppearTimeoutMs = 30000;
     }
 
     public static class Account

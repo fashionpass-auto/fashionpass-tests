@@ -31,7 +31,8 @@ public sealed class TestConfig
         var baseNode = JsonNode.Parse(File.ReadAllText(basePath));
         if (baseNode is not JsonObject baseObject)
             throw new InvalidOperationException($"Invalid configuration root in {basePath}");
-        var merged = baseObject.DeepClone() as JsonObject;
+        var merged = baseObject.DeepClone() as JsonObject
+            ?? throw new InvalidOperationException($"Invalid configuration root in {basePath}");
 
         JsonObject? localObject = null;
         if (File.Exists(localPath) && JsonNode.Parse(File.ReadAllText(localPath)) is JsonObject local)
@@ -124,6 +125,7 @@ public sealed class TimeoutSettings
 {
     public int Default { get; set; } = 30000;
     public int Navigation { get; set; } = 60000;
+    public int SignedIn { get; set; } = 60000;
 }
 
 public sealed class ScreenshotSettings

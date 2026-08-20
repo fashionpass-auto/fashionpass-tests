@@ -60,4 +60,51 @@ public abstract class BasePage
     }
 
     protected async Task<bool> IsVisibleAsync(ILocator locator) => await locator.IsVisibleAsync();
+
+    private static readonly string[] IgnoredTrackingHosts =
+{
+    "trkn.us", "google-analytics.com", "googletagmanager.com",
+    "facebook.net", "doubleclick.net", "hotjar.com", "mixpanel.com",
+    "segment.io", "scorecardresearch.com", "quantserve.com",
+    "criteo.com", "taboola.com", "outbrain.com", "bat.bing.com"
+};
+
+public async Task WaitForImagesToLoadAsync(int timeoutMs = 15000)
+{
+    try
+    {
+        await Page.WaitForFunctionAsync(
+            "() => Array.from(document.querySelectorAll('img')).every(i => i.complete)",
+            null,
+            new PageWaitForFunctionOptions { Timeout = timeoutMs });
+    }
+    catch (Exception)
+    {
+        // Lazy-loaded images may never complete until scrolled; fall through to the check.
+    }
+}
+
+public async Task<string[]> GetBrokenImagesAsync()
+{
+    var broken = await Page.EvaluateAsync<string[]>(
+        "() => Array.from(document.querySelectorAll('img'))" +
+        ".filter(i => i.complete && i.naturalWidth === 0).map(i => i.src)");
+
+return broken
+        .Where(src => !IgnoredTrackingHosts.Any(host =>
+            src.Contains(host, StringComparison.OrdinalIgnoreCase)))
+        .ToArray();
+    }
+
+public async Task<string[]> GetBrokenIconsAsync()
+    => await Page.EvaluateAsync<string[]>(
+        "() => Array.from(document.querySelectorAll('svg use'))" +
+        ".filter(u => !u.getAttribute('href') && !u.getAttribute('xlink:href'))" +
+        ".map(u => u.outerHTML.slice(0, 120))");
+
+    public IReadOnlyList<string> GetRelevantConsoleErrors()
+        => (TestActivityCollector.Current?.ConsoleErrors ?? Array.Empty<string>())
+            .Where(msg => !IgnoredTrackingHosts.Any(host =>
+                msg.Contains(host, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
 }
