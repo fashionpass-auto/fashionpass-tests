@@ -26,6 +26,7 @@ packages/
 appsettings.*.json
 !appsettings.dev.json
 !appsettings.stage.json
+!appsettings.live.json
 
 # Local secrets - never commit
 *.key
