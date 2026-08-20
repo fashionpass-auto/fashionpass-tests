@@ -59,7 +59,6 @@ public abstract class WebTest : BaseTest
                 await EmailReporter.SendFailureReportAsync(
                     Config,
                     testName,
-                    TestContext.CurrentContext.Result.Message,
                     Activity,
                     Page,
                     screenshotPath,
